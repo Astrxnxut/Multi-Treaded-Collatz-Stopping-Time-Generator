@@ -8,6 +8,9 @@ using std::cin;
 using std::endl;
 using std::string;
 
+//Value at which algorithm must stop at
+const int STOPPING_VALUE = 1;
+
 bool isEven(long value){
     if(value % 2 == 0){
         return true;
@@ -42,6 +45,24 @@ void initializeStartingIntArray(int* startingIntArray, long n, int t){
     }
 }
 
+int startThreadLoop(long integer){
+    long newInt = integer;
+    int counter = 0;
+
+    while(newInt != STOPPING_VALUE){
+        if(isEven(newInt)){
+            newInt = ifEven(newInt);
+        }
+        else{
+            newInt = ifOdd(newInt);
+        }
+
+        ++counter;
+    }
+
+    return counter;
+}
+
 int main(int argc, char* argv[]){
 
     /*
@@ -64,9 +85,6 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    //Value at which algorithm must stop at
-    const int STOPPING_VALUE = 1;
-
     //Array initialized on the heap to save stopping time values
     int* stoppingTimeArray = new int[n];
 
@@ -81,6 +99,10 @@ int main(int argc, char* argv[]){
 
     initializeStartingIntArray(startingIntArray,n,t);
 
+    long testingInt = startingIntArray[t - 1];
+
+    cout << "Stopping Time for " << testingInt << ": ";
+    cout << startThreadLoop(testingInt) << endl;
 
    }
    else{
