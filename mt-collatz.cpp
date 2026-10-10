@@ -25,49 +25,21 @@ long ifOdd(long value){
     return (3 * value) + 1;
 }
 
-//Checks between 2 cases to split work amongst threads evenly
+//Splits work amongst threads almost evenly
 void initializeStartingIntArray(int* startingIntArray, long n, int t){
 
     long numbersPerThread = n / t;
 
-    //Case 1: Clean division
-    if(n % t == 0){
-
-        for(int i = 0; i < t; ++i){
-            startingIntArray[i] = (numbersPerThread * i) + 1;
-        }
-    }
-    /*
-    * Case 2: division ends with a remainder
-    * We take the remainder, muliply it by the number of threads
-    * And then add that remainder to the last starting int index
-    * Ex. 150 / 7 = 21.428....
-    * We set all indexs in the array except the last to 21
-    * Then for the final we take 0.428... * 7 (number of threads) = 3
-    * 21 * 6 = 126, then we add 21 + 3(the remainder we aquired) = 150
-    */
-    else{
-        int remainder = n - (numbersPerThread * t);
-        for(int i = 0; i < t; ++i){
-            //Setting startingInts for all threads except the last one
-            if(i + 1 < t){
-                startingIntArray[i] = (numbersPerThread * i) + 1;
-            }
-            else{
-                startingIntArray[i] = (numbersPerThread * i) + remainder;
-            }
-        }
+    for(int i = 0; i < t; ++i){
+        startingIntArray[i] = (numbersPerThread * i) + 1;
     }
 
     cout << "Testing initilization of starting int array:" << endl;
     cout << "Numbers Per Thread: " << numbersPerThread << endl;
-    cout << "Remainder: " << n - (numbersPerThread * t) << endl;
 
     for(int i = 0; i < t; ++i){
         cout << startingIntArray[i] << endl;
     }
-
-
 }
 
 int main(int argc, char* argv[]){
