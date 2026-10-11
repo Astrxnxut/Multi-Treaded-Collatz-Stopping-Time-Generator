@@ -10,6 +10,14 @@ using std::string;
 
 //Value at which algorithm must stop at
 const int STOPPING_VALUE = 1;
+int currentValueCounter = 1;
+int* stoppingTimeArray;
+
+void initTest(long n, int t){
+    cout << "Range: " << n << endl;
+    cout << "Thread Count: " << t << endl;
+
+}
 
 bool isEven(long value){
     if(value % 2 == 0){
@@ -28,39 +36,45 @@ long ifOdd(long value){
     return (3 * value) + 1;
 }
 
-//Splits work amongst threads almost evenly
-void initializeStartingIntArray(int* startingIntArray, long n, int t){
+//Starting int is inclusive, finishing int is exclusive
+void startThreadLoop(){
 
-    long numbersPerThread = n / t;
+        int counter = 0;
+        int newInt = currentValueCounter;
+        int index = newInt - 1;
+        ++currentValueCounter;
 
-    for(int i = 0; i < t; ++i){
-        startingIntArray[i] = (numbersPerThread * i) + 1;
-    }
+        while(newInt != STOPPING_VALUE){
+            if(isEven(newInt)){
+                newInt = ifEven(newInt);
+            }
+            else{
+                newInt = ifOdd(newInt);
+            }
 
-    cout << "Testing initilization of starting int array:" << endl;
-    cout << "Numbers Per Thread: " << numbersPerThread << endl;
+            ++counter;
+        }
+        stoppingTimeArray[index] = counter;
+}
 
-    for(int i = 0; i < t; ++i){
-        cout << startingIntArray[i] << endl;
+void printStoppingTimeHistogram(int* array, int numberOfValues){
+    for(int k = 0; k <= 1000; ++k){
+        int counter = 0;
+
+        for(int i = 0; i < numberOfValues; ++i){
+            if(array[i] == k){
+                ++counter;
+            }
+        }
+
+        cout << k << "," << counter << endl;
     }
 }
 
-int startThreadLoop(long integer){
-    long newInt = integer;
-    int counter = 0;
-
-    while(newInt != STOPPING_VALUE){
-        if(isEven(newInt)){
-            newInt = ifEven(newInt);
-        }
-        else{
-            newInt = ifOdd(newInt);
-        }
-
-        ++counter;
+void printStoppingTime(int* array, int numberOfValues){
+    for(int i = 0; i < numberOfValues; ++i){
+        cout << i + 1 << ": " << array[i] << endl;
     }
-
-    return counter;
 }
 
 int main(int argc, char* argv[]){
@@ -74,10 +88,10 @@ int main(int argc, char* argv[]){
    if(argc == 3){
 
     //Holds the value of n, for which the algorithm goes from 1 to n
-    long n = std::stol(argv[1]);
+    const long n = std::stol(argv[1]);
 
     //Holds the number of threads to perform the collatz algorithm on
-    int t = std::stoi(argv[2]);
+    const int t = std::stoi(argv[2]);
 
     //Checks if t is zero to prevent division by zero in initilizeStartingIntArray() method
     if(t == 0){
@@ -86,23 +100,16 @@ int main(int argc, char* argv[]){
     }
 
     //Array initialized on the heap to save stopping time values
-    int* stoppingTimeArray = new int[n];
+    stoppingTimeArray = new int[n];
 
-    //Array that has the starting number for each thread
-    //Ex. Thread 1 starts at 0, thread 2 starts at 55
-    int* startingIntArray = new int[t];
+    initTest(n,t);
+    
+    while(currentValueCounter != n + 1){
+        startThreadLoop();
+    }
 
-    cout << "Range is: " << n << endl;
-    cout << "# of threads is: " << t << endl;
-
-    cout <<"Testing if stopping time array is initialized to zeros: " << stoppingTimeArray[0] << endl;
-
-    initializeStartingIntArray(startingIntArray,n,t);
-
-    long testingInt = startingIntArray[t - 1];
-
-    cout << "Stopping Time for " << testingInt << ": ";
-    cout << startThreadLoop(testingInt) << endl;
+    // printStoppingTimeHistogram(stoppingTimeArray,n);
+    printStoppingTime(stoppingTimeArray,n);
 
    }
    else{
