@@ -1,7 +1,13 @@
+//For Threads
 #include <thread>
+#include <mutex>
+
+//For tracking the duration of the process
+#include <time.h>
+
+//Input Output
 #include <iostream>
 #include <string>
-#include <mutex>
 
 using std::cout;
 using std::cin;
@@ -13,11 +19,14 @@ const int STOPPING_VALUE = 1;
 int currentValueCounter = 1;
 int* stoppingTimeArray;
 
-void initTest(long n, int t){
-    cout << "Range: " << n << endl;
-    cout << "Thread Count: " << t << endl;
+long n;
+int t;
 
-}
+double computationStartTime;
+double computationEndTime;
+
+pthread_mutex_t lock;
+bool noLockEnabled;
 
 bool isEven(long value){
     if(value % 2 == 0){
@@ -34,27 +43,6 @@ long ifEven(long value){
 //If the value is odd we times it by 3 then add one
 long ifOdd(long value){
     return (3 * value) + 1;
-}
-
-//Starting int is inclusive, finishing int is exclusive
-void startThreadLoop(){
-
-        int counter = 0;
-        int newInt = currentValueCounter;
-        int index = newInt - 1;
-        ++currentValueCounter;
-
-        while(newInt != STOPPING_VALUE){
-            if(isEven(newInt)){
-                newInt = ifEven(newInt);
-            }
-            else{
-                newInt = ifOdd(newInt);
-            }
-
-            ++counter;
-        }
-        stoppingTimeArray[index] = counter;
 }
 
 void printStoppingTimeHistogram(int* array, int numberOfValues){
@@ -77,7 +65,46 @@ void printStoppingTime(int* array, int numberOfValues){
     }
 }
 
+void* threadProcess(void* param){
+
+    int newInt;
+
+    do{
+        if(noLockEnabled == false){
+            pthread_mutex_lock(&lock);
+            newInt = currentValueCounter;
+            ++currentValueCounter;
+            pthread_mutex_unlock(&lock);
+        }
+        else{
+            newInt = currentValueCounter;
+            ++currentValueCounter;
+        }
+
+
+        int counter = 0;
+
+        int index = newInt - 1;
+
+        while(newInt != STOPPING_VALUE){
+            if(isEven(newInt)){
+                newInt = ifEven(newInt);
+            }
+            else{
+                newInt = ifOdd(newInt);
+            }
+
+            ++counter;
+        }
+        stoppingTimeArray[index] = counter;
+    }while(currentValueCounter <= n);
+        
+    pthread_exit(0);
+}
+
 int main(int argc, char* argv[]){
+
+    noLockEnabled = false;
 
     /*
     Getting the range and number of threads from the command line arguments
@@ -88,29 +115,43 @@ int main(int argc, char* argv[]){
    if(argc == 3){
 
     //Holds the value of n, for which the algorithm goes from 1 to n
-    const long n = std::stol(argv[1]);
+    n = std::stol(argv[1]);
 
     //Holds the number of threads to perform the collatz algorithm on
-    const int t = std::stoi(argv[2]);
+    t = std::stoi(argv[2]);
 
-    //Checks if t is zero to prevent division by zero in initilizeStartingIntArray() method
+    //Checks to make sure atleast one thread is being used
     if(t == 0){
         cout << "Error: Thread count must be higher than 0." << endl;
         return 1;
     }
 
+    pthread_mutex_init(&lock,NULL);
+
+    //Array to hold our threads so we can track them then join them later
+    pthread_t threadArray[t];
+
     //Array initialized on the heap to save stopping time values
     stoppingTimeArray = new int[n];
-
-    initTest(n,t);
     
-    while(currentValueCounter != n + 1){
-        startThreadLoop();
+    //Creating threads
+    for(int i = 0; i < t; ++i){
+        //Make it where you can differentiate the different threads 
+        //by giving them names other than just thread
+        pthread_create(&threadArray[i],NULL,threadProcess, (void*)"thread");
     }
 
-    // printStoppingTimeHistogram(stoppingTimeArray,n);
-    printStoppingTime(stoppingTimeArray,n);
+    //Waiting for threads to end before continuing 
+    cout << "Waiting for threads" << endl;
+    for(int i = 0; i < t; ++i){
+        pthread_join(threadArray[i], NULL);
+    }
 
+    pthread_mutex_destroy(&lock);
+
+    cout << "Threads done" << endl;
+
+    printStoppingTime(stoppingTimeArray, n);
    }
    else{
     cout << "Error: Argument count is not 3.\nRange and thread amount must be set." << endl;
