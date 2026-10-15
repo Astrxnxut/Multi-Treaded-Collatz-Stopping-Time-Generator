@@ -11,12 +11,13 @@
 
 using std::cout;
 using std::cin;
+using std::cerr;
 using std::endl;
 using std::string;
 
 //Value at which algorithm must stop at
 const int STOPPING_VALUE = 1;
-int currentValueCounter = 1;
+int currentValueCounter;
 int* stoppingTimeArray;
 
 long n;
@@ -59,10 +60,9 @@ void printStoppingTimeHistogram(int* array, int numberOfValues){
     }
 }
 
-void printStoppingTime(int* array, int numberOfValues){
-    for(int i = 0; i < numberOfValues; ++i){
-        cout << i + 1 << ": " << array[i] << endl;
-    }
+void printProcessElapsedTime(){
+    double duration = 0.0f;
+    cerr << n << "," << t << "," << duration << endl;
 }
 
 void* threadProcess(void* param){
@@ -83,7 +83,6 @@ void* threadProcess(void* param){
 
 
         int counter = 0;
-
         int index = newInt - 1;
 
         while(newInt != STOPPING_VALUE){
@@ -104,6 +103,7 @@ void* threadProcess(void* param){
 
 int main(int argc, char* argv[]){
 
+    currentValueCounter = 1;
     noLockEnabled = false;
 
     /*
@@ -134,6 +134,9 @@ int main(int argc, char* argv[]){
     //Array initialized on the heap to save stopping time values
     stoppingTimeArray = new int[n];
     
+    //Start clock here since we are creating threads that will immediately start working
+
+
     //Creating threads
     for(int i = 0; i < t; ++i){
         //Make it where you can differentiate the different threads 
@@ -151,7 +154,7 @@ int main(int argc, char* argv[]){
 
     cout << "Threads done" << endl;
 
-    printStoppingTime(stoppingTimeArray, n);
+    printStoppingTimeHistogram(stoppingTimeArray, n);
    }
    else{
     cout << "Error: Argument count is not 3.\nRange and thread amount must be set." << endl;
